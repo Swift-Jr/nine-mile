@@ -1,0 +1,17 @@
+work out direction of travel
+
+deal with junctions
+- if at end of a road
+- find the next junction
+- choose a road
+- move onto new road
+
+turn if the road turns
+
+
+
+traffic lights
+
+switch lanes
+
+scrolling map
