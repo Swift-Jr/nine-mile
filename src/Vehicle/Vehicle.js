@@ -21,7 +21,7 @@ export class Vehicle {
     this.distanceOnRoad = 0;
 
     this.position = new Point();
-    this.isTravelingInverted = false;
+    this.isTravelingInverted = false; //TODO: Remove this -> pass 'entryPoint' to the function and let that work it out
 
     this.setPositionOnRoad(this.entryRoad);
     this.setRoad(this.entryRoad);
@@ -30,20 +30,21 @@ export class Vehicle {
 
   setPositionOnRoad(road) {
     let {position} = this;
-    let newPosition = new Point();
+    let x = Math.round(position.x / 10) * 10;
+    let y = Math.round(position.y / 10) * 10;
 
-    if (position.x === road.p0.x && position.y === road.p0.y) {
+    let newPosition = new Point();
+    //debugger;
+
+    if (x === road.p0.x && y === road.p0.y) {
       newPosition.x = road.p0.x;
       newPosition.y = road.p0.y;
       this.isTravelingInverted = false;
-    } else if (position.x === road.p2.x && position.y === road.p2.y) {
+    } else if (x === road.p2.x && y === road.p2.y) {
       newPosition.x = road.p2.x;
       newPosition.y = road.p2.y;
       this.isTravelingInverted = true;
-    } else if (
-      (position.x === 0 && road.p0.x === 0) ||
-      (position.y === 0 && road.p0.y === 0)
-    ) {
+    } else if ((x === 0 && road.p0.x === 0) || (y === 0 && road.p0.y === 0)) {
       newPosition.x = road.p0.x;
       newPosition.y = road.p0.y;
       this.isTravelingInverted = false;
@@ -71,12 +72,17 @@ export class Vehicle {
     let options = this.currentMap.junctions[nextJunction.x][
       nextJunction.y
     ].filter(possibility => {
-      return possibility != this.currentRoad;
+      return possibility.tile != this.currentRoad.tile;
     });
 
-    //TODO: Pick a random option
-    if (options.length == 0) debugger;
-    this.nextRoad = options[0];
+    //debugger;
+
+    let option = options.length;
+    if (option > 1) {
+      option = Math.ceil(randomNumBetween(0, option - 1));
+    }
+    //if (options.length == 0) debugger;
+    this.nextRoad = options[option - 1];
   }
 
   updatePosition(x, y) {
@@ -97,9 +103,9 @@ export class Vehicle {
   bounding(x = null, y = null) {
     let space2 = 2 * this.space;
     return {
-      x: (x || this.position.x) - this.space,
+      x: x || this.position.x, // - this.space,
       y: (y || this.position.y) - this.space,
-      width: this.width + space2,
+      width: this.width, // + space2,
       height: this.height + space2
     };
   }
@@ -130,14 +136,16 @@ export class Vehicle {
       this.decelerate();
     }
 
-    if (this.distanceOnRoad >= this.currentRoad.getLength()) {
-      //this.setRoad(this.nextRoad);
+    if (this.distanceOnRoad >= this.currentRoad.getLength() && this.nextRoad) {
+      this.distanceOnRoad -= this.currentRoad.getLength();
+      this.setPositionOnRoad(this.nextRoad);
+      this.setRoad(this.nextRoad);
     }
 
     // Move
     let newPosition = this.currentRoad.getPointAtDistance(
       this.distanceOnRoad + this.speed,
-      this.isTravelingInverted //TODO:This just isnt working...
+      this.isTravelingInverted
     );
 
     this.collisionMap.moveTo(this, newPosition.x, newPosition.y);
@@ -164,23 +172,35 @@ export class Vehicle {
     // Draw
     if (this.onMap) {
       const context = state.context;
+
+      let angle =
+        this.currentRoad.getAngleAtDistance(
+          this.distanceOnRoad,
+          this.isTravelingInverted
+        ) - 1.5707963267948966;
+
       context.save();
-      context.fillStyle = "green";
+
+      context.translate(newPosition.x, newPosition.y);
+      context.rotate(angle);
+
+      context.fillStyle = "grey";
       context.fillRect(
-        this.position.x,
-        this.position.y,
+        -this.width / 2,
+        -this.height / 2,
         this.width,
         this.height
       );
 
-      context.strokeStyle = "green";
+      /*context.strokeStyle = "grey";
+      context.lineWidth = 2;
       context.rect(
-        this.bounding().x,
-        this.bounding().y,
+        this.bounding().x - newPosition.x - this.width / 2,
+        this.bounding().y - newPosition.y - this.height / 2,
         this.bounding().width,
         this.bounding().height
       );
-      context.stroke();
+      context.stroke();*/
 
       context.restore();
     }

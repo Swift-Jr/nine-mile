@@ -1,4 +1,5 @@
-import React, {Component} from "react";
+import
+React, {Component} from "react";
 import {Map} from "./Map";
 import {Vehicle} from "./Vehicle";
 import {CollisionMap} from "./CollisionMap";
@@ -9,16 +10,22 @@ const OBJECT_TYPE = {
 
 const level1tilemap = [
   [
-    1, 1, 0, 1, 0
+    0, 13, 23, 2, 2
   ],
   [
-    1, 1, 0, 3, 2
+    1, 1, 1, 0, 0
   ],
   [
-    1, 4, 5, 1, 0
+    22, 21, 24, 13, 12
   ],
   [
-    1, 0, 1, 1, 0
+    1, 0, 11, 10, 1
+  ],
+  [
+    11, 2, 23, 2, 10
+  ],
+  [
+    0, 0, 0, 0, 0
   ]
 ];
 
@@ -84,6 +91,7 @@ class App extends Component {
     const vehicles = this.objects[OBJECT_TYPE.VEHICLE];
 
     context.save();
+    context.clearRect(0, 0, this.state.screen.width, this.state.screen.height);
 
     context.fillStyle = '#000';
     context.globalAlpha = 0.4;
@@ -98,7 +106,7 @@ class App extends Component {
     context.scale(this.state.screen.ratio, this.state.screen.ratio);
 
     //TODO: Read max values from a config?
-    if (!vehicles.length || vehicles.length < 7) {
+    if (!vehicles.length || vehicles.length < 1) {
       let count = vehicles.length + 1;
       this.setState({vehiclesCount: count});
       this.generateVehicle(count)

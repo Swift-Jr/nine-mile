@@ -5,7 +5,7 @@ export class Point {
   }
 }
 
-export default class QuadraticCurve {
+export class QuadraticCurve {
   /**
    * [constructor description]
    * @param Point p0 start point
@@ -83,4 +83,31 @@ export default class QuadraticCurve {
 
     return point;
   }
+
+  getAngleAtDistance(distance, fromP2 = false) {
+    let length = this.getLength();
+    return this.getAngleAtPercent(distance / length, fromP2);
+  }
+
+  getAngleAtPercent(t, fromP2 = false) {
+    const {p0, p1, p2} = this;
+
+    let tangentX, tangentY;
+
+    if (fromP2) {
+      t = 1 - t;
+    }
+
+    let t1 = 1 - t;
+
+    /*tangentX = t1 * p1.x + t * p2.x - (t1 * p0.x + t * p1.x);
+    tangentY = t1 * p1.y + t * p2.y - (t1 * p0.y + t * p1.y);*/
+
+    tangentX = 2 * t1 * (p1.x - p0.x) + 2 * t * (p2.x - p1.x);
+    tangentY = 2 * t1 * (p1.y - p0.y) + 2 * t * (p2.y - p1.y);
+
+    return Math.atan2(tangentY, tangentX);
+  }
 }
+
+export default QuadraticCurve;

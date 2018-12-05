@@ -1,14 +1,12 @@
-work out direction of travel
-
-deal with junctions
-- if at end of a road
-- find the next junction
-- choose a road
-- move onto new road
-
-turn if the road turns
+[]
 
 
+select a lane (directional flow)
+- on map load, draw a lane array (possible lane[x][y] = []?)
+- starting at entry point, designate north/south
+- follow the roads plotting north system and south system
+- set each roads north and south lanes - reference back to the array
+- check for any entry points without and repeat
 
 traffic lights
 
