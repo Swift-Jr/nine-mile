@@ -62,22 +62,19 @@ export class Map {
     return;
   }
 
-  //TODO: Repeat this until all entry roads have A lanes.
-  //Then repeat for B lanes
-
   generateLaneMatrix2(currentLane, intersect) {
     if (!currentLane) {
       let entryRoad = this.randomEntryRoad();
 
       //Get left lane
-      if (entryRoad.lanes[0].p0.x === 0) {
+      if (entryRoad.lanes[0].p0.y === 0) {
         //top
         currentLane =
           entryRoad.lanes[0].p0.x < entryRoad.lanes[1].p0.x
             ? entryRoad.lanes[0]
             : entryRoad.lanes[1];
         intersect = currentLane.p2;
-      } else if (entryRoad.lanes[0].p0.y === 0) {
+      } else if (entryRoad.lanes[0].p0.x === 0) {
         //left
         currentLane =
           entryRoad.lanes[0].p0.y > entryRoad.lanes[1].p0.y
@@ -87,14 +84,14 @@ export class Map {
       } else if (entryRoad.lanes[0].p2.y === this.height) {
         //bottom
         currentLane =
-          entryRoad.lanes[0].p0.x < entryRoad.lanes[1].p0.x
+          entryRoad.lanes[0].p2.x < entryRoad.lanes[1].p2.x
             ? entryRoad.lanes[0]
             : entryRoad.lanes[1];
         intersect = currentLane.p0;
       } else if (entryRoad.lanes[0].p2.x === this.width) {
         //right
         currentLane =
-          entryRoad.lanes[0].p0.y > entryRoad.lanes[1].p0.y
+          entryRoad.lanes[0].p2.y > entryRoad.lanes[1].p2.y
             ? entryRoad.lanes[0]
             : entryRoad.lanes[1];
         intersect = currentLane.p0;
@@ -102,13 +99,24 @@ export class Map {
         debugger;
       }
     }
-    currentLane = currentLane ? currentLane : this.randomEntryRoad().lanes[0];
-    intersect = intersect ? intersect : currentLane.p2;
 
+    //Direct the lane so intersect at p0
+    if (currentLane.p0.x === intersect.x && currentLane.p0.y === intersect.y) {
+      let newP2 = currentLane.p0;
+      currentLane.p0 = currentLane.p2;
+      currentLane.p2 = newP2;
+    }
     currentLane.road.rightLane.push(currentLane);
-    /*currentLane.road.lanes
-      .filter(lane => lane != currentLane)
-      .forEach(lane => currentLane.road.leftLane.push(lane));*/
+
+    currentLane.road.lanes.filter(lane => lane != currentLane).forEach(lane => {
+      if (lane.p2.x === intersect.x || lane.p2.y === intersect.y) {
+        let newP2 = lane.p0;
+        lane.p0 = lane.p2;
+        lane.p2 = newP2;
+      }
+
+      currentLane.road.leftLane.push(lane);
+    });
 
     this.laneJunctions[intersect.x][intersect.y]
       .filter(

@@ -1,22 +1,39 @@
 import
+
 React, {Component} from "react";
 import {Map} from "./Map";
 import {Vehicle} from "./Vehicle";
 import {CollisionMap} from "./CollisionMap";
+
+import RequestAnimationFrame from './RequestAnimationFrame';
 
 const OBJECT_TYPE = {
   'VEHICLE': 1
 }
 
 const level1tilemap = [
-  [
-    0, 13, 23, 2, 2
+  /*[
+    0, 0, 1, 0, 0
   ],
   [
-    1, 1, 1, 0, 0
+    0, 0, 1, 0, 0
   ],
   [
-    22, 21, 24, 13, 12
+    0, 0, 11, 12, 0
+  ],
+  [
+    0, 0, 0, 1, 0
+  ],
+  [0, 0, 0, 1, 0]
+  */
+  [
+    1, 11, 23, 2, 2
+  ],
+  [
+    1, 0, 1, 0, 0
+  ],
+  [
+    22, 2, 24, 13, 12
   ],
   [
     1, 0, 11, 10, 1
@@ -25,7 +42,7 @@ const level1tilemap = [
     11, 2, 23, 2, 10
   ],
   [
-    0, 0, 0, 0, 0
+    0, 0, 1, 0, 0
   ]
 ];
 
@@ -73,7 +90,7 @@ class App extends Component {
   }
 
   animate = () => {
-    requestAnimationFrame(() => {
+    RequestAnimationFrame(() => {
       this.updateGame()
     });
   }
@@ -106,7 +123,7 @@ class App extends Component {
     context.scale(this.state.screen.ratio, this.state.screen.ratio);
 
     //TODO: Read max values from a config?
-    if (!vehicles.length || vehicles.length < 1) {
+    if (!vehicles.length || vehicles.length < 5) {
       let count = vehicles.length + 1;
       this.setState({vehiclesCount: count});
       this.generateVehicle(count)

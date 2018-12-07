@@ -67,6 +67,13 @@ export class QuadraticCurve {
     return this.getPointAtPercent(distance / length, fromP2);
   }
 
+  getPointAtDistance2(distance, travelingToo) {
+    let length = this.getLength();
+    let fromP2 = travelingToo !== this.p2;
+
+    return this.getPointAtPercent(distance / length, fromP2);
+  }
+
   getPointAtPercent(t, fromP2 = false) {
     const {p0, p1, p2} = this;
 
@@ -86,6 +93,12 @@ export class QuadraticCurve {
 
   getAngleAtDistance(distance, fromP2 = false) {
     let length = this.getLength();
+    return this.getAngleAtPercent(distance / length, fromP2);
+  }
+
+  getAngleAtDistance2(distance, travelingToo) {
+    let length = this.getLength();
+    let fromP2 = travelingToo !== this.p2;
     return this.getAngleAtPercent(distance / length, fromP2);
   }
 

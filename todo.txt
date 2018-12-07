@@ -1,6 +1,3 @@
-[]
-
-
 select a lane (directional flow)
 - on map load, draw a lane array (possible lane[x][y] = []?)
 - starting at entry point, designate north/south

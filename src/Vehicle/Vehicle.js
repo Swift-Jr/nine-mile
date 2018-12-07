@@ -15,20 +15,41 @@ export class Vehicle {
     this.collisionMap = args.collisionMap;
     this.space = randomNumBetween(2, 8);
     this.entryRoad = this.currentMap.randomEntryRoad();
+    this.entryLane = this.entryLaneFromRoad(this.entryRoad);
     this.travelHistory = [];
 
     this.distanceTraveled = 0;
-    this.distanceOnRoad = 0;
+    //this.distanceOnRoad = 0;
+    this.distanceOnLane = 0;
 
     this.position = new Point();
-    this.isTravelingInverted = false; //TODO: Remove this -> pass 'entryPoint' to the function and let that work it out
+    //this.isTravelingInverted = false; //TODO: Remove this -> pass 'entryPoint' to the function and let that work it out
 
-    this.setPositionOnRoad(this.entryRoad);
-    this.setRoad(this.entryRoad);
+    //this.setPositionOnRoad(this.entryRoad);
+    this.setPositionOnLane(this.entryLane);
+    //this.setRoad(this.entryRoad);
+    this.setLane(this.entryLane);
     //this.addScore = args.addScore;
   }
 
-  setPositionOnRoad(road) {
+  entryLaneFromRoad(road) {
+    let options = road.lanes.filter(lane => {
+      return (
+        lane.p0.y === 0 ||
+        lane.p0.x === 0 ||
+        lane.p0.y === this.currentMap.height ||
+        lane.p0.x === this.currentMap.width
+      );
+    });
+
+    if (options.length === 0) {
+      //debugger;
+    }
+
+    return options[0];
+  }
+
+  /*setPositionOnRoad(road) {
     let {position} = this;
     let x = Math.round(position.x / 10) * 10;
     let y = Math.round(position.y / 10) * 10;
@@ -55,16 +76,32 @@ export class Vehicle {
     }
 
     this.position = newPosition;
+  }*/
+
+  setPositionOnLane(lane) {
+    let {position} = this;
+    let x = Math.round(position.x / 10) * 10;
+    let y = Math.round(position.y / 10) * 10;
+
+    position.x = lane.p0.x;
+    position.y = lane.p0.y;
   }
 
-  setRoad(road) {
+  /*setRoad(road) {
     this.currentRoad = road;
     this.travelHistory.push(road);
 
     this.setNextRoad();
+  }*/
+
+  setLane(lane) {
+    this.currentLane = lane;
+    this.travelHistory.push(lane);
+
+    this.setNextLane();
   }
 
-  setNextRoad() {
+  /*setNextRoad() {
     let nextJunction = this.isTravelingInverted
       ? this.currentRoad.p0
       : this.currentRoad.p2;
@@ -83,6 +120,23 @@ export class Vehicle {
     }
     //if (options.length == 0) debugger;
     this.nextRoad = options[option - 1];
+  }*/
+
+  setNextLane() {
+    let options = this.currentMap.laneJunctions[this.currentLane.p2.x][
+      this.currentLane.p2.y
+    ].filter(possibility => {
+      return possibility.road.tile != this.currentLane.road.tile;
+    });
+
+    //debugger;
+
+    let option = options.length;
+    if (option > 1) {
+      option = Math.ceil(randomNumBetween(0, option - 1));
+    }
+    //if (options.length == 0) debugger;
+    this.nextLane = options[option - 1];
   }
 
   updatePosition(x, y) {
@@ -103,8 +157,8 @@ export class Vehicle {
   bounding(x = null, y = null) {
     let space2 = 2 * this.space;
     return {
-      x: x || this.position.x, // - this.space,
-      y: (y || this.position.y) - this.space,
+      x: (x || this.position.x) - this.width / 2, // - this.space,
+      y: (y || this.position.y) - this.height / 2 - space2 / 2,
       width: this.width, // + space2,
       height: this.height + space2
     };
@@ -136,6 +190,7 @@ export class Vehicle {
       this.decelerate();
     }
 
+    /*
     if (this.distanceOnRoad >= this.currentRoad.getLength() && this.nextRoad) {
       this.distanceOnRoad -= this.currentRoad.getLength();
       this.setPositionOnRoad(this.nextRoad);
@@ -143,9 +198,24 @@ export class Vehicle {
     }
 
     // Move
-    let newPosition = this.currentRoad.getPointAtDistance(
-      this.distanceOnRoad + this.speed,
+    let newPosition = this.currentLane.getPointAtDistance(
+      this.distanceOnLane + this.speed,
       this.isTravelingInverted
+    );*/
+
+    if (this.distanceOnLane >= this.currentLane.getLength() && this.nextLane) {
+      this.distanceOnLane -= this.currentLane.getLength();
+      //this.setPositionOnLane(this.nextLane);
+      this.setLane(this.nextLane);
+    }
+
+    if (this.distanceOnLane >= this.currentLane.getLength() && !this.nextLane) {
+      this.destroy();
+    }
+
+    // Move
+    let newPosition = this.currentLane.getPointAtDistance(
+      this.distanceOnLane + this.speed
     );
 
     this.collisionMap.moveTo(this, newPosition.x, newPosition.y);
@@ -154,7 +224,8 @@ export class Vehicle {
       this.position.x === newPosition.x &&
       this.position.y === newPosition.y
     ) {
-      this.distanceOnRoad += this.speed;
+      //this.distanceOnRoad += this.speed;
+      this.distanceOnLane += this.speed;
       this.distanceTraveled += this.speed;
 
       this.accelerate();
@@ -173,15 +244,18 @@ export class Vehicle {
     if (this.onMap) {
       const context = state.context;
 
-      let angle =
+      /*let angle =
         this.currentRoad.getAngleAtDistance(
           this.distanceOnRoad,
           this.isTravelingInverted
-        ) - 1.5707963267948966;
+        ) - 1.5707963267948966;*/
+      let angle =
+        this.currentLane.getAngleAtDistance(this.distanceOnLane) -
+        1.5707963267948966;
 
       context.save();
 
-      context.translate(newPosition.x, newPosition.y);
+      context.translate(this.position.x, this.position.y);
       context.rotate(angle);
 
       context.fillStyle = "grey";
@@ -192,15 +266,15 @@ export class Vehicle {
         this.height
       );
 
-      /*context.strokeStyle = "grey";
+      context.strokeStyle = "grey";
       context.lineWidth = 2;
       context.rect(
-        this.bounding().x - newPosition.x - this.width / 2,
-        this.bounding().y - newPosition.y - this.height / 2,
+        this.bounding().x - this.position.x,
+        this.bounding().y - this.position.y,
         this.bounding().width,
         this.bounding().height
       );
-      context.stroke();*/
+      context.stroke();
 
       context.restore();
     }

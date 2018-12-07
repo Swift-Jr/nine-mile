@@ -93,10 +93,6 @@ export default class Road extends QuadraticCurve {
     return new Road(start, control, end);
   }
 
-  /*getPointAtDistance(distance, inverted = false) {
-    return this.lanes[1].getPointAtDistance(distance, inverted);
-  }*/
-
   render(context) {
     context.save();
     context.strokeStyle = "white";
@@ -121,22 +117,64 @@ export default class Road extends QuadraticCurve {
     this.rightLane.forEach(lane => {
       context.save();
       context.strokeStyle = "red";
-      context.lineWidth = 4;
+      context.lineWidth = 1;
       context.beginPath();
       context.moveTo(lane.p0.x, lane.p0.y);
       context.quadraticCurveTo(lane.p1.x, lane.p1.y, lane.p2.x, lane.p2.y);
       context.stroke();
+      context.restore();
+
+      //Draw directional arrow at 1/2 distance
+      let halfWayPoint = lane.getPointAtPercent(0.5);
+
+      context.save();
+
+      context.translate(halfWayPoint.x, halfWayPoint.y);
+      context.rotate(
+        Math.atan2(lane.p2.y - lane.p0.y, lane.p2.x - lane.p0.x) +
+          1.5707963267948966
+      );
+      context.strokeStyle = "yellow";
+      context.fillStyle = "yellow";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(0, 0);
+      context.lineTo(5, 5);
+      context.lineTo(-5, 5);
+      context.closePath();
+      context.fill();
       context.restore();
     });
 
     this.leftLane.forEach(lane => {
       context.save();
       context.strokeStyle = "green";
-      context.lineWidth = 4;
+      context.lineWidth = 1;
       context.beginPath();
       context.moveTo(lane.p0.x, lane.p0.y);
       context.quadraticCurveTo(lane.p1.x, lane.p1.y, lane.p2.x, lane.p2.y);
       context.stroke();
+      context.restore();
+
+      //Draw directional arrow at 1/2 distance
+      let halfWayPoint = lane.getPointAtPercent(0.25);
+
+      context.save();
+
+      context.translate(halfWayPoint.x, halfWayPoint.y);
+      context.rotate(
+        Math.atan2(lane.p2.y - lane.p0.y, lane.p2.x - lane.p0.x) +
+          1.5707963267948966
+      );
+      context.strokeStyle = "yellow";
+      context.fillStyle = "yellow";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(0, 0);
+      context.lineTo(5, 5);
+      context.lineTo(-5, 5);
+      context.closePath();
+      context.fill();
       context.restore();
     });
   }
