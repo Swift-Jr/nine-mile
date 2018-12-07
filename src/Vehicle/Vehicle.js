@@ -10,6 +10,7 @@ export class Vehicle {
     this.minimumSpeed = randomNumBetween(0.1, 0.3);
     this.create = args.create;
 
+    this.angle = 0;
     this.speed = 0;
     this.width = 10;
     this.height = 20;
@@ -21,17 +22,12 @@ export class Vehicle {
     this.travelHistory = [];
 
     this.distanceTraveled = 0;
-    //this.distanceOnRoad = 0;
     this.distanceOnLane = 0;
 
     this.position = new Point();
-    //this.isTravelingInverted = false; //TODO: Remove this -> pass 'entryPoint' to the function and let that work it out
 
-    //this.setPositionOnRoad(this.entryRoad);
     this.setPositionOnLane(this.entryLane);
-    //this.setRoad(this.entryRoad);
     this.setLane(this.entryLane);
-    //this.addScore = args.addScore;
   }
 
   entryLaneFromRoad(road) {
@@ -44,41 +40,8 @@ export class Vehicle {
       );
     });
 
-    if (options.length === 0) {
-      //debugger;
-    }
-
     return options[0];
   }
-
-  /*setPositionOnRoad(road) {
-    let {position} = this;
-    let x = Math.round(position.x / 10) * 10;
-    let y = Math.round(position.y / 10) * 10;
-
-    let newPosition = new Point();
-    //debugger;
-
-    if (x === road.p0.x && y === road.p0.y) {
-      newPosition.x = road.p0.x;
-      newPosition.y = road.p0.y;
-      this.isTravelingInverted = false;
-    } else if (x === road.p2.x && y === road.p2.y) {
-      newPosition.x = road.p2.x;
-      newPosition.y = road.p2.y;
-      this.isTravelingInverted = true;
-    } else if ((x === 0 && road.p0.x === 0) || (y === 0 && road.p0.y === 0)) {
-      newPosition.x = road.p0.x;
-      newPosition.y = road.p0.y;
-      this.isTravelingInverted = false;
-    } else {
-      newPosition.x = road.p2.x;
-      newPosition.y = road.p2.y;
-      this.isTravelingInverted = true;
-    }
-
-    this.position = newPosition;
-  }*/
 
   setPositionOnLane(lane) {
     let {position} = this;
@@ -89,40 +52,12 @@ export class Vehicle {
     position.y = lane.p0.y;
   }
 
-  /*setRoad(road) {
-    this.currentRoad = road;
-    this.travelHistory.push(road);
-
-    this.setNextRoad();
-  }*/
-
   setLane(lane) {
     this.currentLane = lane;
     this.travelHistory.push(lane);
 
     this.setNextLane();
   }
-
-  /*setNextRoad() {
-    let nextJunction = this.isTravelingInverted
-      ? this.currentRoad.p0
-      : this.currentRoad.p2;
-
-    let options = this.currentMap.junctions[nextJunction.x][
-      nextJunction.y
-    ].filter(possibility => {
-      return possibility.tile != this.currentRoad.tile;
-    });
-
-    //debugger;
-
-    let option = options.length;
-    if (option > 1) {
-      option = Math.ceil(randomNumBetween(0, option - 1));
-    }
-    //if (options.length == 0) debugger;
-    this.nextRoad = options[option - 1];
-  }*/
 
   setNextLane() {
     let options = this.currentMap.laneJunctions[this.currentLane.p2.x][
@@ -131,13 +66,11 @@ export class Vehicle {
       return possibility.road.tile != this.currentLane.road.tile;
     });
 
-    //debugger;
-
     let option = options.length;
     if (option > 1) {
       option = Math.ceil(randomNumBetween(0, option - 1));
     }
-    //if (options.length == 0) debugger;
+
     this.nextLane = options[option - 1];
   }
 
@@ -145,23 +78,21 @@ export class Vehicle {
     this.position.x = x;
     this.position.y = y;
 
-    if (!this.onMap && /*x > 0 ||*/ y > 0) {
+    if (!this.onMap && (x > 0 || y > 0)) {
       this.onMap = true;
     }
-    //this.position = this.currentTile.
   }
 
   destroy() {
     this.delete = true;
-    //this.addScore(this.score);
   }
 
   bounding(x = null, y = null) {
     let space2 = 2 * this.space;
     return {
-      x: (x || this.position.x) - this.width / 2, // - this.space,
+      x: (x || this.position.x) - this.width / 2,
       y: (y || this.position.y) - this.height / 2 - space2 / 2,
-      width: this.width, // + space2,
+      width: this.width,
       height: this.height + space2
     };
   }
@@ -192,27 +123,13 @@ export class Vehicle {
       this.decelerate();
     }
 
-    /*
-    if (this.distanceOnRoad >= this.currentRoad.getLength() && this.nextRoad) {
-      this.distanceOnRoad -= this.currentRoad.getLength();
-      this.setPositionOnRoad(this.nextRoad);
-      this.setRoad(this.nextRoad);
-    }
-
-    // Move
-    let newPosition = this.currentLane.getPointAtDistance(
-      this.distanceOnLane + this.speed,
-      this.isTravelingInverted
-    );*/
-
-    if (this.distanceOnLane >= this.currentLane.getLength() && this.nextLane) {
-      this.distanceOnLane -= this.currentLane.getLength();
-      //this.setPositionOnLane(this.nextLane);
-      this.setLane(this.nextLane);
-    }
-
-    if (this.distanceOnLane >= this.currentLane.getLength() && !this.nextLane) {
-      this.destroy();
+    if (this.distanceOnLane >= this.currentLane.getLength()) {
+      if (this.nextLane) {
+        this.distanceOnLane -= this.currentLane.getLength();
+        this.setLane(this.nextLane);
+      } else {
+        this.destroy();
+      }
     }
 
     // Move
@@ -226,7 +143,6 @@ export class Vehicle {
       this.position.x === newPosition.x &&
       this.position.y === newPosition.y
     ) {
-      //this.distanceOnRoad += this.speed;
       this.distanceOnLane += this.speed;
       this.distanceTraveled += this.speed;
 
@@ -240,25 +156,18 @@ export class Vehicle {
       return this.destroy();
     }
 
-    //Arriving
-
     // Draw
     if (this.onMap) {
       const context = state.context;
 
-      /*let angle =
-        this.currentRoad.getAngleAtDistance(
-          this.distanceOnRoad,
-          this.isTravelingInverted
-        ) - 1.5707963267948966;*/
-      let angle =
+      this.angle =
         this.currentLane.getAngleAtDistance(this.distanceOnLane) -
         1.5707963267948966;
 
       context.save();
 
       context.translate(this.position.x, this.position.y);
-      context.rotate(angle);
+      context.rotate(this.angle);
 
       context.fillStyle = "grey";
       context.fillRect(

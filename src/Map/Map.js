@@ -19,10 +19,7 @@ export class Map {
 
     this.loadTiles(tileMap);
 
-    console.log(this.laneJunctions);
-
-    this.generateLaneMatrix2();
-    //this.generateLaneMatrix("leftLane");
+    this.generateLaneMatrix();
   }
 
   loadTiles(tileMap) {
@@ -62,7 +59,7 @@ export class Map {
     return;
   }
 
-  generateLaneMatrix2(currentLane, intersect) {
+  generateLaneMatrix(currentLane, intersect) {
     if (!currentLane) {
       let entryRoad = this.randomEntryRoad();
 
@@ -95,8 +92,6 @@ export class Map {
             ? entryRoad.lanes[0]
             : entryRoad.lanes[1];
         intersect = currentLane.p0;
-      } else {
-        debugger;
       }
     }
 
@@ -129,59 +124,7 @@ export class Map {
           intersect.x === nextLane.p0.x && intersect.y === nextLane.p0.y
             ? nextLane.p2
             : nextLane.p0;
-        this.generateLaneMatrix2(nextLane, nextIntersect);
-      });
-  }
-
-  generateLaneMatrix(direction, currentRoad, currentLane, junctionIntersect) {
-    //console.log(this.ti++);
-    //Pick a starting road
-    currentRoad = currentRoad ? currentRoad : this.randomEntryRoad();
-
-    //Get the current lane
-    currentLane = currentLane
-      ? currentLane
-      : direction === "rightLane"
-        ? currentRoad.lanes[0]
-        : currentRoad.lanes[1];
-
-    //Get a current lane intersect
-    //laneIntersect = laneIntersect ? laneIntersect : currentRoad.lanes[0].p0;
-
-    //Get the next junction
-    junctionIntersect = junctionIntersect ? junctionIntersect : currentLane.p2; //TODO: Support for other edges -> x = 0, x/y = width/height
-
-    //Add the lane direction to the road
-    currentRoad[direction].push(currentLane);
-
-    this.lastLaneGenerated = currentLane;
-
-    //Recurse each road at the next junction
-    if (
-      this.laneJunctions[junctionIntersect.x][junctionIntersect.y].length > 2
-    ) {
-      debugger;
-    }
-    this.laneJunctions[junctionIntersect.x][junctionIntersect.y]
-      .filter(lane => lane.road[direction].length === 0)
-      .some(nextLane => {
-        let nextJunctionIntersect =
-          nextLane.p0.x === junctionIntersect.x &&
-          nextLane.p0.y === junctionIntersect.y
-            ? nextLane.p2
-            : nextLane.p0;
-
-        //TODO: Filter has to stop you going back on yourself
-        //Maybe checking that nextJunctionIntersect is not behind us
-        //if (this.lastLaneGenerated.road.tile === nextLane.road.tile) return;
-
-        this.generateLaneMatrix(
-          direction,
-          nextLane.road,
-          nextLane,
-          nextJunctionIntersect
-        );
-        return true;
+        this.generateLaneMatrix(nextLane, nextIntersect);
       });
   }
 
@@ -261,19 +204,6 @@ export class Map {
       lane.p0junction = this.laneJunctions[p0.x][p0.y];
       lane.p2junction = this.laneJunctions[p2.x][p2.y];
 
-      /*if (
-        p0.x === 0 ||
-        p0.y === 0 ||
-        p0.x === this.width ||
-        p0.y === this.height ||
-        p2.x === 0 ||
-        p2.y === 0 ||
-        p2.x === this.width ||
-        p2.y === this.height
-      ) {
-        this.edgeRoads.push(road);
-      }*/
-
       lane.road = road;
 
       this.laneJunctions[p0.x][p0.y].push(lane);
@@ -313,8 +243,8 @@ export class Map {
       junctions.forEach((junction, y) => {
         let boundingSize = 20;
 
-        /*context.save();
-        //context.strokeStyle = "green";
+        context.save();
+        context.strokeStyle = "green";
         context.rect(
           x - boundingSize / 2,
           y - boundingSize / 2,
@@ -322,7 +252,7 @@ export class Map {
           boundingSize
         );
         context.stroke();
-        context.restore();*/
+        context.restore();
       });
     });
   }
