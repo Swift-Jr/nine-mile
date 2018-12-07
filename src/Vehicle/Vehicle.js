@@ -1,6 +1,8 @@
 import {randomNumBetween} from "../utils";
 import {Point} from "../QuadraticCurve";
 
+import SAT from "sat";
+
 export class Vehicle {
   constructor(args) {
     this.currentMap = args.currentMap;

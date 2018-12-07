@@ -12,7 +12,8 @@
     "react-scripts": "2.1.1",
     "react-scripts-cssmodules": "^1.1.50",
     "redux": "^4.0.1",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "sat": "^0.7.1"
   },
   "scripts": {
     "build-css": "node-less-chokidar src/ -o src/",
