@@ -139,6 +139,22 @@ const TILES = {
       {p0x: 0, p0y: 50, p1x: 50, p1y: 50, p2x: 100, p2y: 50},
       {p0x: 100, p0y: 50, p1x: 50, p1y: 50, p2x: 50, p2y: 100}
     ]
+  },
+  [TILE_TYPES.JUNCTION_CROSS]: {
+    //imageSrc: tiles.t_right,
+    width: 1,
+    height: 1,
+    lanes: 2,
+    oneway: false,
+    //edgeTile: false,
+    roads: [
+      {p0x: 50, p0y: 0, p1x: 50, p1y: 50, p2x: 50, p2y: 100},
+      {p0x: 0, p0y: 50, p1x: 50, p1y: 50, p2x: 100, p2y: 50},
+      {p0x: 50, p0y: 0, p1x: 50, p1y: 50, p2x: 100, p2y: 50},
+      {p0x: 50, p0y: 0, p1x: 50, p1y: 50, p2x: 0, p2y: 50},
+      {p0x: 0, p0y: 50, p1x: 50, p1y: 50, p2x: 50, p2y: 100},
+      {p0x: 100, p0y: 50, p1x: 50, p1y: 50, p2x: 50, p2y: 100}
+    ]
   }
 };
 

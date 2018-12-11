@@ -1,9 +1,10 @@
 import
-
 React, {Component} from "react";
 import {Map} from "./Map";
 import {Vehicle} from "./Vehicle";
 import {CollisionMap} from "./CollisionMap";
+import {randomNumBetween} from "./utils";
+import GameConfig from './Config';
 
 import RequestAnimationFrame from './RequestAnimationFrame';
 
@@ -26,24 +27,47 @@ const level1tilemap = [
   ],
   [0, 0, 0, 1, 0]
   */
-  [
+  /*[
     1, 11, 23, 2, 2
   ],
   [
     1, 0, 1, 0, 0
   ],
   [
-    22, 2, 24, 13, 12
+    22, 23, 24, 13, 12
   ],
   [
-    1, 0, 11, 10, 1
+    22, 21, 21, 10, 1
   ],
   [
-    11, 2, 23, 2, 10
+    11, 23, 23, 2, 10
   ],
   [
-    0, 0, 1, 0, 0
-  ]
+    13, 10, 1, 0, 0
+  ],
+  [
+    1, 13, 10, 0, 0
+  ]*/
+  /*[
+    11,
+    12,
+    13,
+    2,
+    23,
+    2
+  ],
+  [
+    13, 10, 1, 0, 1
+  ],
+  [
+    11,
+    2,
+    20,
+    2,
+    20,
+    2
+  ]*/
+  [1]
 ];
 
 class App extends Component {
@@ -53,8 +77,7 @@ class App extends Component {
       width: window.innerWidth,
       height: window.innerHeight,
       ratio: window.devicePixelRatio || 1
-    },
-    vehiclesCount: 0
+    }
   };
 
   objects = {
@@ -62,6 +85,9 @@ class App extends Component {
   };
 
   currentMap = [];
+
+  vehiclesCount = 0;
+  pendingVehiclesCount = 0;
 
   componentDidMount = () => {
     window.addEventListener('resize', this.handleResize.bind(this, false));
@@ -105,7 +131,6 @@ class App extends Component {
 
   updateGame = () => {
     const {context} = this.state;
-    const vehicles = this.objects[OBJECT_TYPE.VEHICLE];
 
     context.save();
     context.clearRect(0, 0, this.state.screen.width, this.state.screen.height);
@@ -122,11 +147,8 @@ class App extends Component {
     //this.drawMap(level1tilemap);
     context.scale(this.state.screen.ratio, this.state.screen.ratio);
 
-    //TODO: Read max values from a config?
-    if (!vehicles.length || vehicles.length < 5) {
-      let count = vehicles.length + 1;
-      this.setState({vehiclesCount: count});
-      this.generateVehicle(count)
+    if (!this.maximumVehiclesReached()) {
+      this.createVehicle();
     }
 
     this.updateObjects(OBJECT_TYPE.VEHICLE);
@@ -135,18 +157,36 @@ class App extends Component {
     this.animate();
   }
 
-  generateVehicle = (howMany) => {
-    for (let i = 0; i < howMany; i++) {
-      let vehicle = new Vehicle({
-        currentMap: this.currentMap,
-        collisionMap: this.vehicleCollisionMap,
-        create: object => {
-          this.createObject(object, OBJECT_TYPE.VEHICLE)
-        },
-        //addScore: this.addScore
-      });
-      this.createObject(vehicle, OBJECT_TYPE.VEHICLE);
-    }
+  maximumVehiclesReached() {
+    //TODO: Read max values from a config?
+
+    const {vehiclesCount, pendingVehiclesCount} = this;
+
+    return (vehiclesCount + pendingVehiclesCount) >= GameConfig.MAX_VEHICLES;
+  }
+
+  createVehicle = () => {
+
+    this.pendingVehiclesCount++;
+
+    setTimeout(() => {
+      this.generateVehicle()
+    }, randomNumBetween(1, 3) * 1000)
+  }
+
+  generateVehicle = () => {
+    let vehicle = new Vehicle({
+      currentMap: this.currentMap,
+      collisionMap: this.vehicleCollisionMap,
+      create: object => {
+        this.createObject(object, OBJECT_TYPE.VEHICLE)
+      },
+      //addScore: this.addScore
+    });
+    this.createObject(vehicle, OBJECT_TYPE.VEHICLE);
+
+    this.vehiclesCount++;
+    this.pendingVehiclesCount--;
   }
 
   createObject = (object, type) => {
@@ -164,6 +204,7 @@ class App extends Component {
         this
           .objects[type]
           .splice(index, 1);
+        this.vehiclesCount--;
       } else {
         objects[index].render(this.state);
       }

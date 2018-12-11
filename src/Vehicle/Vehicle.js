@@ -10,8 +10,12 @@ export class Vehicle {
     this.minimumSpeed = randomNumBetween(0.1, 0.3);
     this.create = args.create;
 
+    this.SATPolygon = null;
+
     this.angle = 0;
     this.speed = 0;
+
+    //TODO: Create an SATPolygon for the vehicle too
     this.width = 10;
     this.height = 20;
     this.onMap = false;
@@ -28,6 +32,35 @@ export class Vehicle {
 
     this.setPositionOnLane(this.entryLane);
     this.setLane(this.entryLane);
+
+    this.createSATPolygon();
+  }
+
+  createSATPolygon() {
+    let bounding = this.bounding();
+
+    this.SATPolygon = new SAT.Polygon(new SAT.Vector(bounding.x, bounding.y), [
+      new SAT.Vector(bounding.x, bounding.y),
+      new SAT.Vector(bounding.x, bounding.y + bounding.height),
+      new SAT.Vector(bounding.x + bounding.width, bounding.y + bounding.height),
+      new SAT.Vector(bounding.x + bounding.width, bounding.y)
+    ]);
+  }
+
+  getSATPolygon(x, y) {
+    let bounding = this.bounding(x, y);
+
+    let boundingPolygon = new SAT.Polygon(new SAT.Vector(0, 0), [
+      new SAT.Vector(-bounding.width / 2, -bounding.height / 2),
+      new SAT.Vector(-bounding.width / 2, bounding.height / 2),
+      new SAT.Vector(bounding.width / 2, bounding.height / 2),
+      new SAT.Vector(bounding.width / 2, -bounding.height / 2)
+    ]);
+
+    boundingPolygon.rotate(this.angle);
+    boundingPolygon.translate(x, y);
+
+    return boundingPolygon;
   }
 
   entryLaneFromRoad(road) {
@@ -74,11 +107,19 @@ export class Vehicle {
     this.nextLane = options[option - 1];
   }
 
-  updatePosition(x, y) {
+  updatePosition(x, y, SATPolygon) {
     this.position.x = x;
     this.position.y = y;
+    this.SATPolygon = SATPolygon;
 
-    if (!this.onMap && (x > 0 || y > 0)) {
+    //this.SATPolygon.pos = new SAT.Vector(x, y);
+
+    if (
+      !this.onMap &&
+      (x > 0 || y > 0) &&
+      x < this.currentMap.width &&
+      y < this.currentMap.height
+    ) {
       this.onMap = true;
     }
   }
@@ -166,6 +207,7 @@ export class Vehicle {
 
       context.save();
 
+      context.beginPath();
       context.translate(this.position.x, this.position.y);
       context.rotate(this.angle);
 
@@ -176,18 +218,53 @@ export class Vehicle {
         this.width,
         this.height
       );
-
-      context.strokeStyle = "grey";
-      context.lineWidth = 2;
-      context.rect(
-        this.bounding().x - this.position.x,
-        this.bounding().y - this.position.y,
-        this.bounding().width,
-        this.bounding().height
-      );
+      context.closePath();
       context.stroke();
 
+      context.fillStyle = "yellow";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(0, 0);
+      context.lineTo(-5, -5);
+      context.lineTo(5, -5);
+      context.closePath();
+      context.fill();
       context.restore();
+
+      context.restore();
+
+      //SAT BOunding
+      context.save();
+      context.beginPath();
+      context.strokeStyle = "yellow";
+      context.lineWidth = 1;
+      for (
+        let cPoint = 0;
+        cPoint < this.SATPolygon.calcPoints.length;
+        cPoint++
+      ) {
+        if (cPoint === 0) {
+          context.moveTo(
+            this.SATPolygon.calcPoints[cPoint].x,
+            this.SATPolygon.calcPoints[cPoint].y
+          );
+        } else {
+          context.lineTo(
+            this.SATPolygon.calcPoints[cPoint].x,
+            this.SATPolygon.calcPoints[cPoint].y
+          );
+        }
+      }
+      context.lineTo(
+        this.SATPolygon.calcPoints[0].x,
+        this.SATPolygon.calcPoints[0].y
+      );
+      context.stroke();
+      context.closePath();
+
+      context.restore();
+    } else {
+      this.destroy();
     }
   }
 }

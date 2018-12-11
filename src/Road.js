@@ -122,10 +122,11 @@ export default class Road extends QuadraticCurve {
       context.moveTo(lane.p0.x, lane.p0.y);
       context.quadraticCurveTo(lane.p1.x, lane.p1.y, lane.p2.x, lane.p2.y);
       context.stroke();
+      context.closePath();
       context.restore();
 
       //Draw directional arrow at 1/2 distance
-      let halfWayPoint = lane.getPointAtPercent(0.5);
+      let halfWayPoint = lane.getPointAtPercent(0.4);
 
       context.save();
 
@@ -154,10 +155,11 @@ export default class Road extends QuadraticCurve {
       context.moveTo(lane.p0.x, lane.p0.y);
       context.quadraticCurveTo(lane.p1.x, lane.p1.y, lane.p2.x, lane.p2.y);
       context.stroke();
+      context.closePath();
       context.restore();
 
       //Draw directional arrow at 1/2 distance
-      let halfWayPoint = lane.getPointAtPercent(0.25);
+      let halfWayPoint = lane.getPointAtPercent(0.4);
 
       context.save();
 

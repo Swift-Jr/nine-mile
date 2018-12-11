@@ -20,6 +20,7 @@ export class Map {
     this.loadTiles(tileMap);
 
     this.generateLaneMatrix();
+    this.fixMissingLanes();
   }
 
   loadTiles(tileMap) {
@@ -68,8 +69,8 @@ export class Map {
         //top
         currentLane =
           entryRoad.lanes[0].p0.x < entryRoad.lanes[1].p0.x
-            ? entryRoad.lanes[0]
-            : entryRoad.lanes[1];
+            ? entryRoad.lanes[1]
+            : entryRoad.lanes[0];
         intersect = currentLane.p2;
       } else if (entryRoad.lanes[0].p0.x === 0) {
         //left
@@ -125,6 +126,40 @@ export class Map {
             ? nextLane.p2
             : nextLane.p0;
         this.generateLaneMatrix(nextLane, nextIntersect);
+      });
+  }
+
+  fixMissingLanes() {
+    this.roads
+      .filter(road => road.rightLane.length === 0 || road.leftLane.length === 0)
+      .forEach(road => {
+        road.lanes.forEach(lane => {
+          let laneAtP0Intersect = this.laneJunctions[lane.p0.x][
+            lane.p0.y
+          ].filter(
+            junctionLane =>
+              junctionLane != lane && junctionLane.road.tile != lane.road.tile
+          )[0];
+
+          if (
+            lane.p0.x === laneAtP0Intersect.p0.x &&
+            lane.p0.y === laneAtP0Intersect.p0.y
+          ) {
+            let newP2 = lane.p0;
+            lane.p0 = lane.p2;
+            lane.p2 = newP2;
+          }
+
+          if (
+            laneAtP0Intersect.road.leftLane.filter(
+              roadLane => roadLane === laneAtP0Intersect
+            ).length === 1
+          ) {
+            lane.road.leftLane.push(lane);
+          } else {
+            lane.road.rightLane.push(lane);
+          }
+        });
       });
   }
 
@@ -244,6 +279,7 @@ export class Map {
         let boundingSize = 20;
 
         context.save();
+        context.beginPath();
         context.strokeStyle = "green";
         context.rect(
           x - boundingSize / 2,
@@ -252,6 +288,7 @@ export class Map {
           boundingSize
         );
         context.stroke();
+        context.closePath();
         context.restore();
       });
     });
