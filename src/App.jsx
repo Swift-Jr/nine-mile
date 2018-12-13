@@ -48,7 +48,7 @@ const level1tilemap = [
   [
     1, 13, 10, 0, 0
   ]*/
-  /*[
+  [
     11,
     12,
     13,
@@ -66,8 +66,7 @@ const level1tilemap = [
     2,
     20,
     2
-  ]*/
-  [1]
+  ]
 ];
 
 class App extends Component {

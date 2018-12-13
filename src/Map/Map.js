@@ -60,107 +60,157 @@ export class Map {
     return;
   }
 
-  generateLaneMatrix(currentLane, intersect) {
-    if (!currentLane) {
+  generateLaneMatrix(currentLanes, intersect, roadIntersect) {
+    if (!currentLanes) {
       let entryRoad = this.randomEntryRoad();
 
       //Get left lane
-      if (entryRoad.lanes[0].p0.y === 0) {
+      if (entryRoad.leftLanes[0].p0.y === 0) {
         //top
-        currentLane =
-          entryRoad.lanes[0].p0.x < entryRoad.lanes[1].p0.x
-            ? entryRoad.lanes[1]
-            : entryRoad.lanes[0];
-        intersect = currentLane.p2;
-      } else if (entryRoad.lanes[0].p0.x === 0) {
+        currentLanes =
+          entryRoad.leftLanes[0].p0.x < entryRoad.rightLanes[0].p0.x
+            ? entryRoad.rightLanes
+            : entryRoad.leftLanes;
+        intersect = currentLanes[0].p2;
+        roadIntersect = currentLanes[0].road.p2;
+      } else if (entryRoad.leftLanes[0].p0.x === 0) {
         //left
-        currentLane =
-          entryRoad.lanes[0].p0.y > entryRoad.lanes[1].p0.y
-            ? entryRoad.lanes[0]
-            : entryRoad.lanes[1];
-        intersect = currentLane.p2;
-      } else if (entryRoad.lanes[0].p2.y === this.height) {
+        currentLanes =
+          entryRoad.leftLanes[0].p0.y > entryRoad.rightLanes[1].p0.y
+            ? entryRoad.leftLanes
+            : entryRoad.rightLanes;
+        intersect = currentLanes[0].p2;
+        roadIntersect = currentLanes[0].road.p2;
+      } else if (entryRoad.leftLanes[0].p2.y === this.height) {
         //bottom
-        currentLane =
-          entryRoad.lanes[0].p2.x < entryRoad.lanes[1].p2.x
-            ? entryRoad.lanes[0]
-            : entryRoad.lanes[1];
-        intersect = currentLane.p0;
-      } else if (entryRoad.lanes[0].p2.x === this.width) {
+        currentLanes =
+          entryRoad.leftLanes[0].p2.x < entryRoad.rightLanes[1].p2.x
+            ? entryRoad.leftLanes
+            : entryRoad.rightLanes;
+        intersect = currentLanes[0].p0;
+        roadIntersect = currentLanes[0].road.p0;
+      } else if (entryRoad.leftLanes[0].p2.x === this.width) {
         //right
-        currentLane =
-          entryRoad.lanes[0].p2.y > entryRoad.lanes[1].p2.y
-            ? entryRoad.lanes[0]
-            : entryRoad.lanes[1];
-        intersect = currentLane.p0;
+        currentLanes =
+          entryRoad.leftLanes[0].p2.y > entryRoad.rightLanes[1].p2.y
+            ? entryRoad.leftLanes
+            : entryRoad.rightLanes;
+        intersect = currentLanes[0].p0;
+        roadIntersect = currentLanes[0].road.p0;
       }
     }
 
     //Direct the lane so intersect at p0
-    if (currentLane.p0.x === intersect.x && currentLane.p0.y === intersect.y) {
-      let newP2 = currentLane.p0;
-      currentLane.p0 = currentLane.p2;
-      currentLane.p2 = newP2;
+    if (
+      currentLanes[0].p0.x === intersect.x &&
+      currentLanes[0].p0.y === intersect.y
+    ) {
+      currentLanes = currentLanes.map(currentLane => {
+        let newP2 = currentLane.p0;
+        currentLane.p0 = currentLane.p2;
+        currentLane.p2 = newP2;
+        return currentLane;
+      });
     }
-    currentLane.road.rightLane.push(currentLane);
 
-    currentLane.road.lanes.filter(lane => lane != currentLane).forEach(lane => {
-      if (lane.p2.x === intersect.x || lane.p2.y === intersect.y) {
-        let newP2 = lane.p0;
-        lane.p0 = lane.p2;
-        lane.p2 = newP2;
+    //Reverse for the other lanes
+    let otherLanes =
+      currentLanes[0].road.leftLanes[0] === currentLanes[0]
+        ? currentLanes[0].road.rightLanes
+        : currentLanes[0].road.leftLanes;
+
+    if (
+      otherLanes[0].p2.x === intersect.x ||
+      otherLanes[0].p2.y === intersect.y
+    ) {
+      otherLanes = otherLanes.map(currentLane => {
+        let newP2 = currentLane.p0;
+        currentLane.p0 = currentLane.p2;
+        currentLane.p2 = newP2;
+        return currentLane;
+      });
+
+      if (currentLanes[0].road.leftLanes[0] === currentLanes[0]) {
+        currentLanes[0].road.rightLanes = otherLanes;
+      } else {
+        currentLanes[0].road.leftLanes = otherLanes;
       }
+    }
 
-      currentLane.road.leftLane.push(lane);
-    });
+    currentLanes[0].road.laneMatrixGenerated = true;
 
-    this.laneJunctions[intersect.x][intersect.y]
+    this.junctions[roadIntersect.x][roadIntersect.y]
       .filter(
-        lane =>
-          lane.road.tile != currentLane.road.tile &&
-          lane.road.rightLane.length === 0
+        road =>
+          road != currentLanes[0].road &&
+          road.tile != currentLanes[0].road.tile &&
+          !road.laneMatrixGenerated
       )
-      .forEach(nextLane => {
-        let nextIntersect =
-          intersect.x === nextLane.p0.x && intersect.y === nextLane.p0.y
-            ? nextLane.p2
-            : nextLane.p0;
-        this.generateLaneMatrix(nextLane, nextIntersect);
+      .forEach(nextRoad => {
+        let nextLanes, nextIntersect, nextRoadIntersect;
+
+        if (
+          intersect.x === nextRoad.leftLanes[0].p0.x &&
+          intersect.y === nextRoad.leftLanes[0].p0.y
+        ) {
+          nextLanes = nextRoad.leftLanes;
+          nextIntersect = nextRoad.leftLanes[0].p2;
+          nextRoadIntersect = nextRoad.p2;
+        } else if (
+          intersect.x === nextRoad.leftLanes[0].p2.x &&
+          intersect.y === nextRoad.leftLanes[0].p2.y
+        ) {
+          nextLanes = nextRoad.leftLanes;
+          nextIntersect = nextRoad.leftLanes[0].p0;
+          nextRoadIntersect = nextRoad.p0;
+        } else if (
+          intersect.x === nextRoad.rightLanes[0].p0.x &&
+          intersect.y === nextRoad.rightLanes[0].p0.y
+        ) {
+          nextLanes = nextRoad.rightLanes;
+          nextIntersect = nextRoad.rightLanes[0].p2;
+          nextRoadIntersect = nextRoad.p2;
+        } else if (
+          intersect.x === nextRoad.rightLanes[0].p2.x &&
+          intersect.y === nextRoad.rightLanes[0].p2.y
+        ) {
+          nextLanes = nextRoad.rightLanes;
+          nextIntersect = nextRoad.rightLanes[0].p0;
+          nextRoadIntersect = nextRoad.p0;
+        }
+
+        this.generateLaneMatrix(nextLanes, nextIntersect, nextRoadIntersect);
       });
   }
 
   fixMissingLanes() {
-    this.roads
-      .filter(road => road.rightLane.length === 0 || road.leftLane.length === 0)
-      .forEach(road => {
-        road.lanes.forEach(lane => {
-          let laneAtP0Intersect = this.laneJunctions[lane.p0.x][
-            lane.p0.y
-          ].filter(
-            junctionLane =>
-              junctionLane != lane && junctionLane.road.tile != lane.road.tile
-          )[0];
+    //TODO: Fix this up
+    this.roads.filter(road => !road.laneMatrixGenerated).forEach(road => {
+      let firstLeftLane = road.leftLanes[0];
 
-          if (
-            lane.p0.x === laneAtP0Intersect.p0.x &&
-            lane.p0.y === laneAtP0Intersect.p0.y
-          ) {
-            let newP2 = lane.p0;
-            lane.p0 = lane.p2;
-            lane.p2 = newP2;
-          }
+      let intersectLeftLane = this.laneJunctions[firstLeftLane.p0.x][
+        firstLeftLane.p0.y
+      ].filter(
+        junctionLane =>
+          junctionLane.road.tile != firstLeftLane.road.tile &&
+          junctionLane.road.laneMatrixGenerated
+      )[0];
 
-          if (
-            laneAtP0Intersect.road.leftLane.filter(
-              roadLane => roadLane === laneAtP0Intersect
-            ).length === 1
-          ) {
-            lane.road.leftLane.push(lane);
-          } else {
-            lane.road.rightLane.push(lane);
-          }
+      if (
+        firstLeftLane.p0.x === intersectLeftLane.p0.x &&
+        firstLeftLane.p0.y === intersectLeftLane.p0.y
+      ) {
+        road.leftLanes = road.leftLanes.map(lane => {
+          let newP2 = lane.p0;
+          lane.p0 = lane.p2;
+          lane.p2 = newP2;
+
+          return lane;
         });
-      });
+      }
+
+      road.laneMatrixGenerated = true;
+    });
   }
 
   addRoadsToMap(roads, tile) {

@@ -1,8 +1,20 @@
-select a lane (directional flow)
-- check for any entry points without and repeat
+
 
 traffic lights
-
-switch lanes
+- rebuild the lane junction map post matrix with only junctions from that point
+- make junction with multiple lanes clickable
+- Setup a traffic light (manual = On|Off)
+- Timer (on xSeconds, off xSeconds)
+- Optional after another junction
+- Optional with another junction
+- Consider lanes and directionality?
 
 scrolling map
+
+switch lanes
+- smart lane control? picking lanes for turnings, avoiding traffic?
+https://www.youtube.com/watch?v=iHzzSao6ypE
+
+map drawing?
+- single tiles rotated?
+- maybe just even point to point roads (converted to curves/straights)

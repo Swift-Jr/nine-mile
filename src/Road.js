@@ -1,7 +1,7 @@
 import {QuadraticCurve, Point} from "./QuadraticCurve";
 
 const LANE_WIDTH = 6;
-const LANE_SPACING = 2;
+const LANE_SPACING = 0;
 
 export default class Road extends QuadraticCurve {
   constructor(p0, p1, p2, lanes = 2) {
@@ -13,14 +13,26 @@ export default class Road extends QuadraticCurve {
     this.rightLane = [];
     this.leftLane = [];
 
-    let laneAndSpacing = LANE_WIDTH + LANE_SPACING;
+    this.rightLanes = [];
+    this.leftLanes = [];
 
-    //vertical 50,0   50,50  50,100   -x  -x  -x
-    //horizont 0, 50  50,50  100,50   -y  -y  -y
-    //topleft  50,0   50,50  0, 50    -x  --  -y
-    //topright 50,0   50,50  100, 50  -x  +-  +y
-    //botleft  100,50 50,50  50, 100  -y  --  -x
-    //botright 0,50   50,50  50, 100  -y  ++  +x
+    this.laneAndSpacing = LANE_WIDTH + LANE_SPACING;
+
+    for (let lane = 1; lane <= lanes; lane++) {
+      this.generateLanesFromRoads(lane);
+    }
+  }
+
+  static createRoad(startX, startY, controlX, controlY, endX, endY) {
+    let start = new Point(startX, startY);
+    let control = new Point(controlX, controlY);
+    let end = new Point(endX, endY);
+
+    return new Road(start, control, end);
+  }
+
+  generateLanesFromRoads(lanes = 1) {
+    const {p0, p1, p2} = this;
 
     for (let i = 1; i >= -1; i -= 2) {
       let laneAndSpacingAdjusted;
@@ -29,7 +41,7 @@ export default class Road extends QuadraticCurve {
         laneP1 = new Point(),
         laneP2 = new Point();
 
-      laneAndSpacingAdjusted = laneAndSpacing * i;
+      laneAndSpacingAdjusted = this.laneAndSpacing * 2 * lanes * i;
 
       if (p0.x === p1.x && p1.x == p2.x) {
         //vertical
@@ -81,19 +93,21 @@ export default class Road extends QuadraticCurve {
         laneP2.y = p2.y;
       }
 
-      this.lanes.push(new QuadraticCurve(laneP0, laneP1, laneP2));
+      let newLane = new QuadraticCurve(laneP0, laneP1, laneP2);
+
+      newLane.road = this;
+      this.lanes.push(newLane);
+
+      if (i > 0) {
+        this.leftLanes.push(newLane);
+      } else {
+        this.rightLanes.push(newLane);
+      }
     }
   }
 
-  static createRoad(startX, startY, controlX, controlY, endX, endY) {
-    let start = new Point(startX, startY);
-    let control = new Point(controlX, controlY);
-    let end = new Point(endX, endY);
-
-    return new Road(start, control, end);
-  }
-
   render(context) {
+    if (!this.laneMatrixGenerated) return;
     context.save();
     context.strokeStyle = "white";
     context.lineWidth = 2;
@@ -114,7 +128,7 @@ export default class Road extends QuadraticCurve {
       context.restore();
     });*/
 
-    this.rightLane.forEach(lane => {
+    this.rightLanes.forEach(lane => {
       context.save();
       context.strokeStyle = "red";
       context.lineWidth = 1;
@@ -147,7 +161,7 @@ export default class Road extends QuadraticCurve {
       context.restore();
     });
 
-    this.leftLane.forEach(lane => {
+    this.leftLanes.forEach(lane => {
       context.save();
       context.strokeStyle = "green";
       context.lineWidth = 1;
