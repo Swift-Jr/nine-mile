@@ -105,12 +105,7 @@ export class Map {
       currentLanes[0].p0.x === intersect.x &&
       currentLanes[0].p0.y === intersect.y
     ) {
-      currentLanes = currentLanes.map(currentLane => {
-        let newP2 = currentLane.p0;
-        currentLane.p0 = currentLane.p2;
-        currentLane.p2 = newP2;
-        return currentLane;
-      });
+      currentLanes = this.inverseLaneDirection(currentLanes);
     }
 
     //Reverse for the other lanes
@@ -123,12 +118,7 @@ export class Map {
       otherLanes[0].p2.x === intersect.x ||
       otherLanes[0].p2.y === intersect.y
     ) {
-      otherLanes = otherLanes.map(currentLane => {
-        let newP2 = currentLane.p0;
-        currentLane.p0 = currentLane.p2;
-        currentLane.p2 = newP2;
-        return currentLane;
-      });
+      otherLanes = this.inverseLaneDirection(otherLanes);
 
       if (currentLanes[0].road.leftLanes[0] === currentLanes[0]) {
         currentLanes[0].road.rightLanes = otherLanes;
@@ -200,16 +190,20 @@ export class Map {
         firstLeftLane.p0.x === intersectLeftLane.p0.x &&
         firstLeftLane.p0.y === intersectLeftLane.p0.y
       ) {
-        road.leftLanes = road.leftLanes.map(lane => {
-          let newP2 = lane.p0;
-          lane.p0 = lane.p2;
-          lane.p2 = newP2;
-
-          return lane;
-        });
+        road.leftLanes = this.inverseLaneDirection(road.leftLanes);
       }
 
       road.laneMatrixGenerated = true;
+    });
+  }
+
+  inverseLaneDirection(lanes) {
+    return lanes.map(lane => {
+      let newP2 = lane.p0;
+      lane.p0 = lane.p2;
+      lane.p2 = newP2;
+
+      return lane;
     });
   }
 
