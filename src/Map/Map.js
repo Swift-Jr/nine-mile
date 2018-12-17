@@ -115,10 +115,7 @@ export class Map {
         ? currentLanes[0].road.rightLanes
         : currentLanes[0].road.leftLanes;
 
-    if (
-      otherLanes[0].p2.x === intersect.x ||
-      otherLanes[0].p2.y === intersect.y
-    ) {
+    if (otherLanes[0].p2.matches(intersect)) {
       otherLanes = this.inverseLaneDirection(otherLanes);
 
       if (currentLanes[0].road.leftLanes[0] === currentLanes[0]) {
