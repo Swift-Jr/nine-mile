@@ -17,10 +17,13 @@ export class Map {
 
     this.lastLaneGenerated = null;
 
+    this.junctionMatrix = [];
+
     this.loadTiles(tileMap);
 
     this.generateLaneMatrix();
     this.fixMissingLanes();
+    this.generateJunctionMatrix();
   }
 
   loadTiles(tileMap) {
@@ -101,10 +104,7 @@ export class Map {
     }
 
     //Direct the lane so intersect at p0
-    if (
-      currentLanes[0].p0.x === intersect.x &&
-      currentLanes[0].p0.y === intersect.y
-    ) {
+    if (currentLanes[0].p0.matches(intersect)) {
       currentLanes = this.inverseLaneDirection(currentLanes);
     }
 
@@ -114,10 +114,7 @@ export class Map {
         ? currentLanes[0].road.rightLanes
         : currentLanes[0].road.leftLanes;
 
-    if (
-      otherLanes[0].p2.x === intersect.x ||
-      otherLanes[0].p2.y === intersect.y
-    ) {
+    if (otherLanes[0].p2.matches(intersect)) {
       otherLanes = this.inverseLaneDirection(otherLanes);
 
       if (currentLanes[0].road.leftLanes[0] === currentLanes[0]) {
@@ -132,38 +129,26 @@ export class Map {
     this.junctions[roadIntersect.x][roadIntersect.y]
       .filter(
         road =>
-          road != currentLanes[0].road &&
-          road.tile != currentLanes[0].road.tile &&
+          road !== currentLanes[0].road &&
+          road.tile !== currentLanes[0].road.tile &&
           !road.laneMatrixGenerated
       )
       .forEach(nextRoad => {
         let nextLanes, nextIntersect, nextRoadIntersect;
 
-        if (
-          intersect.x === nextRoad.leftLanes[0].p0.x &&
-          intersect.y === nextRoad.leftLanes[0].p0.y
-        ) {
+        if (intersect.matches(nextRoad.leftLanes[0].p0)) {
           nextLanes = nextRoad.leftLanes;
           nextIntersect = nextRoad.leftLanes[0].p2;
           nextRoadIntersect = nextRoad.p2;
-        } else if (
-          intersect.x === nextRoad.leftLanes[0].p2.x &&
-          intersect.y === nextRoad.leftLanes[0].p2.y
-        ) {
+        } else if (intersect.matches(nextRoad.leftLanes[0].p2)) {
           nextLanes = nextRoad.leftLanes;
           nextIntersect = nextRoad.leftLanes[0].p0;
           nextRoadIntersect = nextRoad.p0;
-        } else if (
-          intersect.x === nextRoad.rightLanes[0].p0.x &&
-          intersect.y === nextRoad.rightLanes[0].p0.y
-        ) {
+        } else if (intersect.matches(nextRoad.rightLanes[0].p0)) {
           nextLanes = nextRoad.rightLanes;
           nextIntersect = nextRoad.rightLanes[0].p2;
           nextRoadIntersect = nextRoad.p2;
-        } else if (
-          intersect.x === nextRoad.rightLanes[0].p2.x &&
-          intersect.y === nextRoad.rightLanes[0].p2.y
-        ) {
+        } else if (intersect.matches(nextRoad.rightLanes[0].p2)) {
           nextLanes = nextRoad.rightLanes;
           nextIntersect = nextRoad.rightLanes[0].p0;
           nextRoadIntersect = nextRoad.p0;
@@ -174,7 +159,6 @@ export class Map {
   }
 
   fixMissingLanes() {
-    //TODO: Fix this up
     this.roads.filter(road => !road.laneMatrixGenerated).forEach(road => {
       let firstLeftLane = road.leftLanes[0];
 
@@ -182,14 +166,11 @@ export class Map {
         firstLeftLane.p0.y
       ].filter(
         junctionLane =>
-          junctionLane.road.tile != firstLeftLane.road.tile &&
+          junctionLane.road.tile !== firstLeftLane.road.tile &&
           junctionLane.road.laneMatrixGenerated
       )[0];
 
-      if (
-        firstLeftLane.p0.x === intersectLeftLane.p0.x &&
-        firstLeftLane.p0.y === intersectLeftLane.p0.y
-      ) {
+      if (firstLeftLane.p0.matches(intersectLeftLane.p0)) {
         road.leftLanes = this.inverseLaneDirection(road.leftLanes);
       }
 
@@ -210,8 +191,6 @@ export class Map {
   addRoadsToMap(roads, tile) {
     let roadsWithJunctions = roads.map(road => {
       let {p0, p2} = road;
-      //check the bounding points (ends of road) of p0 and p2
-      //add a junction and reference if not set
 
       if (!this.junctions[p0.x]) {
         this.junctions[p0.x] = [];
@@ -294,6 +273,36 @@ export class Map {
     this.lanes = this.lanes.concat(lanesWithJunctions);
   }
 
+  /**
+   * Generate a matrix of traffic light locations where a lane
+   * ends with more than one option
+   *
+   * @return {[type]} [description]
+   */
+  generateJunctionMatrix() {
+    //Loop thorugh the lane matrix
+    this.laneJunctions.forEach((junctions, x) => {
+      junctions.forEach((lanes, y) => {
+        //Must have some kind of intersection
+        if (lanes.length > 2) {
+          let lanesEndingAtJunction = lanes
+            .filter(lane => lane.p2.x === x && lane.p2.y === y)
+            .forEach(lane => {
+              let lanesStartingAtJunction = this.laneJunctions[x][y].filter(
+                lane => lane.p0.x === x && lane.p0.y === y
+              );
+
+              if (lanesStartingAtJunction.length > 1) {
+                if (!this.junctionMatrix[x]) this.junctionMatrix[x] = [];
+                if (!this.junctionMatrix[x][y]) this.junctionMatrix[x][y] = [];
+                this.junctionMatrix[x][y].push(lane);
+              }
+            });
+        }
+      });
+    });
+  }
+
   randomEntryTile() {
     return this.edgeTiles[0];
   }
@@ -334,6 +343,21 @@ export class Map {
         context.stroke();
         context.closePath();
         context.restore();
+      });
+    });
+
+    this.junctionMatrix.forEach((junctions, x) => {
+      junctions.forEach((lanes, y) => {
+        lanes.forEach(lane => {
+          context.beginPath();
+          context.arc(x, y, 5, 0, 2 * Math.PI, false);
+          context.fillStyle = "green";
+          context.fill();
+
+          context.save();
+
+          context.restore();
+        });
       });
     });
   }

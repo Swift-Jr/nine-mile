@@ -7,11 +7,8 @@ export default class Road extends QuadraticCurve {
   constructor(p0, p1, p2, lanes = 2) {
     super(p0, p1, p2);
 
-    //We need each lane by adding/substracting lane with from p0, p1, p2???
     this.lanes = [];
     this.laneMatrix = [];
-    this.rightLane = [];
-    this.leftLane = [];
 
     this.rightLanes = [];
     this.leftLanes = [];
@@ -43,7 +40,7 @@ export default class Road extends QuadraticCurve {
 
       laneAndSpacingAdjusted = this.laneAndSpacing * 2 * lanes * i;
 
-      if (p0.x === p1.x && p1.x == p2.x) {
+      if (p0.x === p1.x && p1.x === p2.x) {
         //vertical
         laneP0.x = p0.x - laneAndSpacingAdjusted;
         laneP0.y = p0.y;
@@ -51,7 +48,7 @@ export default class Road extends QuadraticCurve {
         laneP1.y = p1.y;
         laneP2.x = p2.x - laneAndSpacingAdjusted;
         laneP2.y = p2.y;
-      } else if (p0.y === p1.y && p1.y == p2.y) {
+      } else if (p0.y === p1.y && p1.y === p2.y) {
         //horizontal
         laneP0.x = p0.x;
         laneP0.y = p0.y + laneAndSpacingAdjusted;
@@ -106,8 +103,42 @@ export default class Road extends QuadraticCurve {
     }
   }
 
+  drawLane(context, lane, colour) {
+    context.save();
+    context.strokeStyle = colour;
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(lane.p0.x, lane.p0.y);
+    context.quadraticCurveTo(lane.p1.x, lane.p1.y, lane.p2.x, lane.p2.y);
+    context.stroke();
+    context.closePath();
+    context.restore();
+
+    //Draw directional arrow at 1/2 distance
+    let halfWayPoint = lane.getPointAtPercent(0.4);
+
+    context.save();
+
+    context.translate(halfWayPoint.x, halfWayPoint.y);
+    context.rotate(
+      Math.atan2(lane.p2.y - lane.p0.y, lane.p2.x - lane.p0.x) +
+        1.5707963267948966
+    );
+    context.strokeStyle = "yellow";
+    context.fillStyle = "yellow";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(0, 0);
+    context.lineTo(5, 5);
+    context.lineTo(-5, 5);
+    context.closePath();
+    context.fill();
+    context.restore();
+  }
+
   render(context) {
     if (!this.laneMatrixGenerated) return;
+
     context.save();
     context.strokeStyle = "white";
     context.lineWidth = 2;
@@ -117,81 +148,12 @@ export default class Road extends QuadraticCurve {
     context.stroke();
     context.restore();
 
-    /*this.lanes.forEach(lane => {
-      context.save();
-      context.strokeStyle = "white";
-      context.lineWidth = 4;
-      context.beginPath();
-      context.moveTo(lane.p0.x, lane.p0.y);
-      context.quadraticCurveTo(lane.p1.x, lane.p1.y, lane.p2.x, lane.p2.y);
-      context.stroke();
-      context.restore();
-    });*/
-
-    this.rightLanes.forEach(lane => {
-      context.save();
-      context.strokeStyle = "red";
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(lane.p0.x, lane.p0.y);
-      context.quadraticCurveTo(lane.p1.x, lane.p1.y, lane.p2.x, lane.p2.y);
-      context.stroke();
-      context.closePath();
-      context.restore();
-
-      //Draw directional arrow at 1/2 distance
-      let halfWayPoint = lane.getPointAtPercent(0.4);
-
-      context.save();
-
-      context.translate(halfWayPoint.x, halfWayPoint.y);
-      context.rotate(
-        Math.atan2(lane.p2.y - lane.p0.y, lane.p2.x - lane.p0.x) +
-          1.5707963267948966
-      );
-      context.strokeStyle = "yellow";
-      context.fillStyle = "yellow";
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(0, 0);
-      context.lineTo(5, 5);
-      context.lineTo(-5, 5);
-      context.closePath();
-      context.fill();
-      context.restore();
+    this.leftLanes.forEach(lane => {
+      this.drawLane(context, lane, "red");
     });
 
-    this.leftLanes.forEach(lane => {
-      context.save();
-      context.strokeStyle = "green";
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(lane.p0.x, lane.p0.y);
-      context.quadraticCurveTo(lane.p1.x, lane.p1.y, lane.p2.x, lane.p2.y);
-      context.stroke();
-      context.closePath();
-      context.restore();
-
-      //Draw directional arrow at 1/2 distance
-      let halfWayPoint = lane.getPointAtPercent(0.4);
-
-      context.save();
-
-      context.translate(halfWayPoint.x, halfWayPoint.y);
-      context.rotate(
-        Math.atan2(lane.p2.y - lane.p0.y, lane.p2.x - lane.p0.x) +
-          1.5707963267948966
-      );
-      context.strokeStyle = "yellow";
-      context.fillStyle = "yellow";
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(0, 0);
-      context.lineTo(5, 5);
-      context.lineTo(-5, 5);
-      context.closePath();
-      context.fill();
-      context.restore();
+    this.rightLanes.forEach(lane => {
+      this.drawLane(context, lane, "green");
     });
   }
 }

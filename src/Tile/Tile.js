@@ -158,8 +158,6 @@ const TILES = {
   }
 };
 
-const tyleType = {};
-
 export class Tile {
   constructor(type) {
     this.type = TILES[type];
