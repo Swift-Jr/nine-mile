@@ -1,5 +1,3 @@
-
-
 traffic lights
 - rebuild the lane junction map post matrix with only junctions from that point
 - make junction with multiple lanes clickable
