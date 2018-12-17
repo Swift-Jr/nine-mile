@@ -3,6 +3,10 @@ export class Point {
     this.x = x;
     this.y = y;
   }
+
+  matches(point) {
+    return point.x === this.x && point.y === this.y;
+  }
 }
 
 export class QuadraticCurve {
@@ -99,9 +103,6 @@ export class QuadraticCurve {
     }
 
     let t1 = 1 - t;
-
-    /*tangentX = t1 * p1.x + t * p2.x - (t1 * p0.x + t * p1.x);
-    tangentY = t1 * p1.y + t * p2.y - (t1 * p0.y + t * p1.y);*/
 
     tangentX = 2 * t1 * (p1.x - p0.x) + 2 * t * (p2.x - p1.x);
     tangentY = 2 * t1 * (p1.y - p0.y) + 2 * t * (p2.y - p1.y);
