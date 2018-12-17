@@ -1,5 +1,4 @@
-import
-React, {Component} from "react";
+import React, {Component} from "react";
 import {Map} from "./Map";
 import {Vehicle} from "./Vehicle";
 import {CollisionMap} from "./CollisionMap";
@@ -26,8 +25,8 @@ const level1tilemap = [
     0, 0, 0, 1, 0
   ],
   [0, 0, 0, 1, 0]
-  */
-  /*[
+  /*
+  [
     1, 11, 23, 2, 2
   ],
   [
@@ -45,9 +44,9 @@ const level1tilemap = [
   [
     13, 10, 1, 0, 0
   ],
-  [
-    1, 13, 10, 0, 0
-  ]*/
+  [1, 13, 10, 0, 0]
+  */
+  /*
   [
     11,
     12,
@@ -66,6 +65,27 @@ const level1tilemap = [
     2,
     20,
     2
+  ]*/
+  [
+    1, 11, 23, 2, 2
+  ],
+  [
+    1, 0, 1, 0, 0
+  ],
+  [
+    22, 2, 24, 13, 12
+  ],
+  [
+    1, 0, 11, 10, 1
+  ],
+  [
+    11, 23, 2, 23, 10
+  ],
+  [
+    13, 10, 0, 1, 0
+  ],
+  [
+    1, 0, 13, 10, 0
   ]
 ];
 
