@@ -6,6 +6,7 @@ export class Map {
     this.tiles = [];
     this.edgeTiles = [];
     this.edgeRoads = [];
+
     this.width = Math.max(...tileMap.map(tile => tile.length)) * TILE_WIDTH;
     this.height = tileMap.length * TILE_HEIGHT;
 
