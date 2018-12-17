@@ -6,34 +6,38 @@ import SAT from "sat";
 export class Vehicle {
   constructor(args) {
     this.currentMap = args.currentMap;
-    this.maximumSpeed = randomNumBetween(0.9, 1);
-    this.minimumSpeed = randomNumBetween(0.1, 0.3);
     this.create = args.create;
+    this.collisionMap = args.collisionMap;
 
+    this.randomiseBehaviours();
+
+    //TODO: Create an SATPolygon for the vehicle too
     this.SATPolygon = null;
+    this.position = new Point();
 
     this.angle = 0;
     this.speed = 0;
-
-    //TODO: Create an SATPolygon for the vehicle too
     this.width = 10;
     this.height = 20;
     this.onMap = false;
-    this.collisionMap = args.collisionMap;
-    this.space = randomNumBetween(2, 8);
-    this.entryRoad = this.currentMap.randomEntryRoad();
-    this.entryLane = this.entryLaneFromRoad(this.entryRoad);
-    this.travelHistory = [];
 
+    this.travelHistory = [];
     this.distanceTraveled = 0;
     this.distanceOnLane = 0;
 
-    this.position = new Point();
+    this.entryRoad = this.currentMap.randomEntryRoad();
+    this.entryLane = this.entryLaneFromRoad(this.entryRoad);
 
     this.setPositionOnLane(this.entryLane);
     this.setLane(this.entryLane);
 
     this.createSATPolygon();
+  }
+
+  randomiseBehaviours() {
+    this.maximumSpeed = randomNumBetween(0.9, 1);
+    this.minimumSpeed = randomNumBetween(0.1, 0.3);
+    this.space = randomNumBetween(2, 8);
   }
 
   createSATPolygon() {
@@ -78,8 +82,6 @@ export class Vehicle {
 
   setPositionOnLane(lane) {
     let {position} = this;
-    let x = Math.round(position.x / 10) * 10;
-    let y = Math.round(position.y / 10) * 10;
 
     position.x = lane.p0.x;
     position.y = lane.p0.y;
@@ -93,10 +95,12 @@ export class Vehicle {
   }
 
   setNextLane() {
-    let options = this.currentMap.laneJunctions[this.currentLane.p2.x][
-      this.currentLane.p2.y
+    const {currentLane, currentMap} = this;
+
+    let options = currentMap.laneJunctions[currentLane.p2.x][
+      currentLane.p2.y
     ].filter(possibility => {
-      return possibility.road.tile != this.currentLane.road.tile;
+      return possibility.road.tile !== currentLane.road.tile;
     });
 
     let option = options.length;
@@ -111,8 +115,6 @@ export class Vehicle {
     this.position.x = x;
     this.position.y = y;
     this.SATPolygon = SATPolygon;
-
-    //this.SATPolygon.pos = new SAT.Vector(x, y);
 
     if (
       !this.onMap &&
@@ -156,6 +158,8 @@ export class Vehicle {
   }
 
   render(state) {
+    const {currentLane} = this;
+
     if (this.speed === 0) {
       this.accelerate();
     }
@@ -164,9 +168,9 @@ export class Vehicle {
       this.decelerate();
     }
 
-    if (this.distanceOnLane >= this.currentLane.getLength()) {
+    if (this.distanceOnLane >= currentLane.getLength()) {
       if (this.nextLane) {
-        this.distanceOnLane -= this.currentLane.getLength();
+        this.distanceOnLane -= currentLane.getLength();
         this.setLane(this.nextLane);
       } else {
         this.destroy();
@@ -174,7 +178,7 @@ export class Vehicle {
     }
 
     // Move
-    let newPosition = this.currentLane.getPointAtDistance(
+    let newPosition = currentLane.getPointAtDistance(
       this.distanceOnLane + this.speed
     );
 
@@ -202,7 +206,7 @@ export class Vehicle {
       const context = state.context;
 
       this.angle =
-        this.currentLane.getAngleAtDistance(this.distanceOnLane) -
+        currentLane.getAngleAtDistance(this.distanceOnLane) -
         1.5707963267948966;
 
       context.save();
