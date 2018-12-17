@@ -177,15 +177,12 @@ class App extends Component {
   }
 
   maximumVehiclesReached() {
-    //TODO: Read max values from a config?
-
     const {vehiclesCount, pendingVehiclesCount} = this;
 
     return (vehiclesCount + pendingVehiclesCount) >= GameConfig.MAX_VEHICLES;
   }
 
   createVehicle = () => {
-
     this.pendingVehiclesCount++;
 
     setTimeout(() => {
@@ -199,8 +196,7 @@ class App extends Component {
       collisionMap: this.vehicleCollisionMap,
       create: object => {
         this.createObject(object, OBJECT_TYPE.VEHICLE)
-      },
-      //addScore: this.addScore
+      }
     });
     this.createObject(vehicle, OBJECT_TYPE.VEHICLE);
 
