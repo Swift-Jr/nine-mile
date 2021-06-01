@@ -88,12 +88,12 @@ export class QuadraticCurve {
     return point;
   }
 
-  getAngleAtDistance(distance, fromP2 = false) {
+  getAngleAtDistance(distance, fromP2 = false, degrees = false) {
     let length = this.getLength();
-    return this.getAngleAtPercent(distance / length, fromP2);
+    return this.getAngleAtPercent(distance / length, fromP2, degrees);
   }
 
-  getAngleAtPercent(t, fromP2 = false) {
+  getAngleAtPercent(t, fromP2 = false, degrees = false) {
     const {p0, p1, p2} = this;
 
     let tangentX, tangentY;
@@ -106,8 +106,17 @@ export class QuadraticCurve {
 
     tangentX = 2 * t1 * (p1.x - p0.x) + 2 * t * (p2.x - p1.x);
     tangentY = 2 * t1 * (p1.y - p0.y) + 2 * t * (p2.y - p1.y);
+    /*if (fromP2) {
+      tangentY = p0.y - p2.y;
+      tangentX = p0.x - p2.x;
+    } else {
+      tangentY = p2.y - p0.y;
+      tangentX = p2.x - p0.x;
+    }*/
 
-    return Math.atan2(tangentY, tangentX);
+    let radAngle = Math.atan2(tangentY, tangentX);
+
+    return degrees ? (radAngle * 180) / Math.PI : radAngle;
   }
 }
 

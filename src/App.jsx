@@ -7,6 +7,9 @@ import GameConfig from './Config';
 
 import RequestAnimationFrame from './RequestAnimationFrame';
 
+import Konva from "konva";
+import {Stage, Layer, Rect, Animation} from 'react-konva';
+
 const OBJECT_TYPE = {
   'VEHICLE': 1
 }
@@ -96,14 +99,14 @@ class App extends Component {
       width: window.innerWidth,
       height: window.innerHeight,
       ratio: window.devicePixelRatio || 1
+    },
+    currentMap: new Map([
+      [1]
+    ]),
+    objects: {
+      [OBJECT_TYPE.VEHICLE]: []
     }
   };
-
-  objects = {
-    [OBJECT_TYPE.VEHICLE]: []
-  };
-
-  currentMap = [];
 
   vehiclesCount = 0;
   pendingVehiclesCount = 0;
@@ -124,6 +127,12 @@ class App extends Component {
     });
   }
 
+  componentWillUnmount() {
+    this
+      .konvaAnimation
+      .stop();
+  }
+
   handleResize = (value, e) => {
     this.setState({
       screen: {
@@ -141,11 +150,26 @@ class App extends Component {
   }
 
   startGame = () => {
-    this.currentMap = new Map(level1tilemap);
+    this.setState({currentMap: new Map(level1tilemap)});
+
     this.vehicleCollisionMap = new CollisionMap({
-      map: this.currentMap,
-      objects: this.objects[OBJECT_TYPE.VEHICLE]
+      map: this.state.currentMap,
+      objects: this
+        .state
+        .objects[OBJECT_TYPE.VEHICLE]
     });
+
+    this.konvaAnimation = new Konva.Animation((frame) => {
+      let vehicles = this
+        .state
+        .objects[OBJECT_TYPE.VEHICLE];
+
+      vehicles.forEach(vehicle => vehicle.updateKonva());
+    }, this.vehicleLayer);
+
+    this
+      .konvaAnimation
+      .start();
   }
 
   updateGame = () => {
@@ -161,6 +185,7 @@ class App extends Component {
 
     //TODO: Map could live on a separate canvas that only get redrawn on resize
     this
+      .state
       .currentMap
       .render(context);
     //this.drawMap(level1tilemap);
@@ -192,7 +217,7 @@ class App extends Component {
 
   generateVehicle = () => {
     let vehicle = new Vehicle({
-      currentMap: this.currentMap,
+      currentMap: this.state.currentMap,
       collisionMap: this.vehicleCollisionMap,
       create: object => {
         this.createObject(object, OBJECT_TYPE.VEHICLE)
@@ -205,31 +230,66 @@ class App extends Component {
   }
 
   createObject = (object, type) => {
-    this
-      .objects[type]
-      .push(object);
+    let objects = this
+      .state
+      .objects[type];
+    objects.push(object);
+
+    this.setState({
+      objects: {
+        ...this.state.objects,
+        type: objects
+      }
+    });
   }
 
   updateObjects = (type) => {
     let index = 0;
-    let objects = this.objects[type];
+    let objects = this
+      .state
+      .objects[type];
 
-    for (let object of objects) {
+    objects.forEach((object, index) => {
       if (object.delete) {
-        this
-          .objects[type]
-          .splice(index, 1);
+        this.setState({
+          objects: {
+            ...this.state.objects,
+            type: objects.splice(index, 1)
+          }
+        });
         this.vehiclesCount--;
       } else {
-        objects[index].render(this.state);
+        object.render(this.state);
       }
-      index++;
-    }
+    });
   }
 
   render() {
+    let vehicles = this
+      .state
+      .objects[OBJECT_TYPE.VEHICLE];
+
+    let konvaVehicles = vehicles.map(vehicle => vehicle.renderKonva())
+
+    /*<Layer listening={false} name="vehicles"></Layer>
+    <Layer listening={false} name="lights"></Layer>*/
     return (<div>
-      <canvas ref="canvas" width={this.state.screen.width * this.state.screen.ratio} height={this.state.screen.height * this.state.screen.ratio}/>
+      <canvas className="old" ref="canvas" width={(this.state.screen.width * this.state.screen.ratio) / 2} height={this.state.screen.height * this.state.screen.ratio}/>
+      <Stage name="game" width={(this.state.screen.width * this.state.screen.ratio) / 2} height={this.state.screen.height * this.state.screen.ratio}>
+        <Layer listening={false} name="background">
+          <Rect width={(this.state.screen.width * this.state.screen.ratio) / 2} height={this.state.screen.height * this.state.screen.ratio} fill="#000000"></Rect>
+        </Layer>
+
+        {
+          this
+            .state
+            .currentMap
+            .renderKonva()
+        }
+        <Layer listening={false} name="vehicles" ref={node => this.vehicleLayer = node}>
+          {konvaVehicles}
+        </Layer>
+      </Stage>
     </div>);
   }
 }

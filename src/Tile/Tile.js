@@ -210,6 +210,16 @@ export class Tile {
     return this.type.height * TILE_HEIGHT;
   }
 
+  renderKonva() {
+    if (isDebug()) {
+      return this.mappedRoads.map(road => {
+        return road.renderKonva();
+      });
+    }
+
+    return [];
+  }
+
   render(context) {
     if (this.type.image) {
       context.drawImage(

@@ -1,5 +1,8 @@
+import React from "react";
 import {Tile, TILE_WIDTH, TILE_HEIGHT} from "../Tile";
 import {randomNumBetween} from "../utils";
+
+import {Layer, Rect} from "react-konva";
 
 export class Map {
   constructor(tileMap) {
@@ -322,6 +325,24 @@ export class Map {
     let {x, y, width, height} = object.bounding();
 
     return x < 0 - width || y < 0 - height || x > this.width || y > this.height;
+  }
+
+  renderKonva() {
+    var tiles = [];
+
+    this.tiles.forEach(row => {
+      tiles = tiles.concat(
+        row.map(tile => {
+          return tile.renderKonva();
+        })
+      );
+    });
+
+    return (
+      <Layer listening={false} name="map">
+        {tiles}
+      </Layer>
+    );
   }
 
   render(context) {

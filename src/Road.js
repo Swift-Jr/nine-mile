@@ -1,4 +1,8 @@
+import React from "react";
+
 import {QuadraticCurve, Point} from "./QuadraticCurve";
+import {Group, RegularPolygon} from "react-konva";
+import {QuadraticLine} from "./QuadraticLine";
 
 const LANE_WIDTH = 6;
 const LANE_SPACING = 0;
@@ -134,6 +138,57 @@ export default class Road extends QuadraticCurve {
     context.closePath();
     context.fill();
     context.restore();
+  }
+
+  drawKonvaLane(context, lane, colour) {
+    let halfWayPoint = lane.getPointAtPercent(0.42);
+    let angleDegrees = lane.getAngleAtPercent(0.42, false, true) + 90;
+
+    return (
+      <Group>
+        <QuadraticLine
+          stroke={colour}
+          strokeWidth={1}
+          start={lane.p0}
+          control={lane.p1}
+          end={lane.p2}
+        />
+        <RegularPolygon
+          sides={3}
+          radius={3}
+          fill="yellow"
+          x={halfWayPoint.x}
+          y={halfWayPoint.y}
+          rotation={angleDegrees}
+        />
+      </Group>
+    );
+  }
+
+  renderKonva(context) {
+    if (!this.laneMatrixGenerated) return;
+
+    let konvaElements = [];
+
+    konvaElements.push(
+      <QuadraticLine
+        stroke="white"
+        strokeWidth={2}
+        start={this.p0}
+        control={this.p1}
+        end={this.p2}
+      />
+    );
+
+    this.leftLanes.forEach(lane => {
+      konvaElements.push(this.drawKonvaLane(context, lane, "red"));
+    });
+
+    this.rightLanes.forEach(lane => {
+      konvaElements.push(this.drawKonvaLane(context, lane, "green"));
+    });
+
+    return <Group>{konvaElements}</Group>;
   }
 
   render(context) {

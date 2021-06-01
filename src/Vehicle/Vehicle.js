@@ -1,7 +1,11 @@
+import React from "react";
+
 import {randomNumBetween} from "../utils";
 import {Point} from "../QuadraticCurve";
 
 import SAT from "sat";
+
+import {Group, RegularPolygon, Rect} from "react-konva";
 
 export class Vehicle {
   constructor(args) {
@@ -20,6 +24,8 @@ export class Vehicle {
     this.width = 10;
     this.height = 20;
     this.onMap = false;
+
+    this.konvaNode = null;
 
     this.travelHistory = [];
     this.distanceTraveled = 0;
@@ -128,6 +134,7 @@ export class Vehicle {
 
   destroy() {
     this.delete = true;
+    this.onMap = false;
   }
 
   bounding(x = null, y = null) {
@@ -157,9 +164,7 @@ export class Vehicle {
     }
   }
 
-  render(state) {
-    const {currentLane} = this;
-
+  updateCurrentSpeed() {
     if (this.speed === 0) {
       this.accelerate();
     }
@@ -167,6 +172,10 @@ export class Vehicle {
     if (randomNumBetween(0, 1) > 1.5) {
       this.decelerate();
     }
+  }
+
+  updateCurrentLane() {
+    const {currentLane} = this;
 
     if (this.distanceOnLane >= currentLane.getLength()) {
       if (this.nextLane) {
@@ -176,18 +185,18 @@ export class Vehicle {
         this.destroy();
       }
     }
+  }
 
-    // Move
+  tryAndMove() {
+    const {currentLane} = this;
+
     let newPosition = currentLane.getPointAtDistance(
       this.distanceOnLane + this.speed
     );
 
     this.collisionMap.moveTo(this, newPosition.x, newPosition.y);
 
-    if (
-      this.position.x === newPosition.x &&
-      this.position.y === newPosition.y
-    ) {
+    if (this.position.matches(newPosition)) {
       this.distanceOnLane += this.speed;
       this.distanceTraveled += this.speed;
 
@@ -196,10 +205,64 @@ export class Vehicle {
       this.decelerate();
     }
 
-    // Screen edges
     if (this.onMap && this.currentMap.outOfBounds(this)) {
-      return this.destroy();
+      this.destroy();
     }
+  }
+
+  renderKonva() {
+    let bounding = this.bounding();
+
+    return (
+      <Group
+        ref={node => (this.knovaNode = node)}
+        offsetX={this.width / 2}
+        offsetY={this.height / 2}
+        width={this.width}
+        height={this.height}
+        x={this.position.x}
+        y={this.position.y}
+        rotation={this.currentLane.getAngleAtDistance(
+          this.distanceOnLane,
+          false,
+          true
+        )}
+      >
+        <Rect
+          offsetX={0}
+          offsetY={this.space}
+          width={bounding.width}
+          height={bounding.height}
+          stroke="grey"
+        />
+        <Rect width={this.width} height={this.height} fill="grey" />
+        <RegularPolygon
+          rotation={180}
+          offsetX={this.width / 2}
+          offsetY={this.height / 2}
+          sides={3}
+          radius={5}
+          fill="yellow"
+          x={0}
+          y={0}
+        />
+      </Group>
+    );
+  }
+
+  updateKonva() {
+    this.knovaNode.position(this.position);
+    this.knovaNode.rotation(
+      this.currentLane.getAngleAtDistance(this.distanceOnLane, false, true) - 90
+    );
+  }
+
+  render(state) {
+    const {currentLane} = this;
+
+    this.updateCurrentSpeed();
+    this.updateCurrentLane();
+    this.tryAndMove();
 
     // Draw
     if (this.onMap) {
